@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CS Fundamentals // Revision Core — OS · CN · OOPS · DBMS</title>
+<style>
+/* ============================================================
+   DESIGN TOKENS
+   Theme: "Systems Console" — each subject = a module with its
+   own accent, like panes in a terminal multiplexer.
+   OS    = amber   (#ffb454)  -- kernel / hardware warmth
+   CN    = cyan    (#5ad1e6)  -- signal / wire
+   OOPS  = violet  (#b48cff)  -- blueprint / structure
+   DBMS  = green   (#7ee787)  -- terminal / stored data
+============================================================ */
+:root{
+  --bg:           #0a0e14;
+  --bg-raised:    #0f141d;
+  --bg-card:      #11171f;
+  --bg-card-2:    #141b25;
+  --line:         #1f2733;
+  --line-soft:    #182029;
+  --text:         #d8dee9;
+  --text-dim:     #8b95a5;
+  --text-faint:   #5b6472;
+  --white:        #f3f5f8;
+
+  --os:    #ffb454;
+  --os-dim: #6e5530;
+  --cn:    #5ad1e6;
+  --cn-dim: #2c5a63;
+  --oops:  #b48cff;
+  --oops-dim:#52406e;
+  --dbms:  #7ee787;
+  --dbms-dim:#3a5c3d;
+
+  --warn:  #ff6b6b;
+  --warn-bg: rgba(255,107,107,0.08);
+
+  --font-mono: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --radius: 10px;
+  --maxw: 1320px;
+}
+
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-sans);
+  font-size:16px;
+  line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(circle at 15% 0%, rgba(255,180,84,0.05), transparent 40%),
+    radial-gradient(circle at 85% 8%, rgba(90,209,230,0.05), transparent 40%),
+    radial-gradient(circle at 50% 100%, rgba(126,231,135,0.04), transparent 50%);
+}
+a{color:var(--cn); text-decoration:none;}
+a:hover{text-decoration:underline;}
+::selection{background:rgba(255,180,84,0.25);}
+
+::-webkit-scrollbar{width:10px; height:10px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--line); border-radius:6px;}
+::-webkit-scrollbar-thumb:hover{background:var(--text-faint);}
+
+/* ============ Reading progress bar ============ */
+#progress-bar{
+  position:fixed; top:0; left:0; height:3px; width:0%;
+  background:linear-gradient(90deg,var(--os),var(--cn),var(--oops),var(--dbms));
+  z-index:9999; transition:width 0.08s linear;
+}
+
+/* ============ Top bar (mobile) ============ */
+#topbar{
+  position:sticky; top:0; z-index:500;
+  display:none;
+  align-items:center; justify-content:space-between;
+  background:rgba(10,14,20,0.92);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+  padding:12px 16px;
+}
+#topbar .brand{
+  font-family:var(--font-mono); font-size:13px; color:var(--white); font-weight:600;
+  display:flex; align-items:center; gap:8px;
+}
+#topbar .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--dbms);box-shadow:0 0 8px var(--dbms);}
+#menu-btn{
+  background:var(--bg-card); border:1px solid var(--line); color:var(--text);
+  border-radius:8px; padding:8px 10px; font-size:18px; line-height:1; cursor:pointer;
+}
+
+/* ============ Layout shell ============ */
+.shell{
+  display:grid;
+  grid-template-columns: 300px minmax(0,1fr);
+  max-width:var(--maxw);
+  margin:0 auto;
+  align-items:start;
+}
+
+/* ============ Sidebar (desktop) ============ */
+#sidebar{
+  position:sticky; top:0;
+  height:100vh;
+  overflow-y:auto;
+  padding:28px 18px 60px 24px;
+  border-right:1px solid var(--line);
+  scrollbar-width:thin;
+}
+.brand-block{
+  font-family:var(--font-mono);
+  margin-bottom:22px;
+  padding-bottom:18px;
+  border-bottom:1px dashed var(--line);
+}
+.brand-block .tag{
+  font-size:11px; letter-spacing:0.12em; color:var(--text-faint); text-transform:uppercase;
+}
+.brand-block .title{
+  font-size:17px; color:var(--white); font-weight:700; margin-top:4px; line-height:1.3;
+}
+.brand-block .sub{font-size:12px; color:var(--text-dim); margin-top:6px;}
+.brand-block .blink{display:inline-block; width:7px; color:var(--dbms); animation:blink 1.1s steps(2) infinite;}
+@keyframes blink{50%{opacity:0;}}
+
+nav.toc{font-family:var(--font-mono); font-size:13px;}
+nav.toc .subject-group{margin-bottom:4px;}
+nav.toc .subject-head{
+  display:flex; align-items:center; gap:8px;
+  padding:9px 10px;
+  border-radius:7px;
+  color:var(--white); font-weight:700; font-size:12.5px;
+  letter-spacing:0.03em;
+  margin-top:14px;
+  cursor:default;
+  text-transform:uppercase;
+}
+nav.toc .subject-head .ico{font-size:13px;}
+nav.toc .subject-head.c-os{color:var(--os);}
+nav.toc .subject-head.c-cn{color:var(--cn);}
+nav.toc .subject-head.c-oops{color:var(--oops);}
+nav.toc .subject-head.c-dbms{color:var(--dbms);}
+
+nav.toc ul{list-style:none; margin:0 0 4px 0; padding:0;}
+nav.toc li{position:relative;}
+nav.toc a{
+  display:block;
+  color:var(--text-dim);
+  padding:6px 10px 6px 26px;
+  border-radius:6px;
+  font-size:12.5px;
+  border-left:2px solid transparent;
+  margin-left:6px;
+  transition:background .15s, color .15s;
+  white-space:normal;
+}
+nav.toc a:hover{background:var(--bg-card); color:var(--text); text-decoration:none;}
+nav.toc a.active{
+  color:var(--white); background:var(--bg-card-2);
+  font-weight:600;
+}
+nav.toc .c-os a.active{border-left-color:var(--os);}
+nav.toc .c-cn a.active{border-left-color:var(--cn);}
+nav.toc .c-oops a.active{border-left-color:var(--oops);}
+nav.toc .c-dbms a.active{border-left-color:var(--dbms);}
+nav.toc .recap-link a{color:var(--white); font-weight:700;}
+
+/* ============ Main content ============ */
+main{
+  padding:36px 28px 120px 40px;
+  min-width:0;
+}
+.hero{
+  margin-bottom:48px;
+  padding:32px 0 28px;
+  border-bottom:1px solid var(--line);
+}
+.hero .kicker{
+  font-family:var(--font-mono); font-size:12px; color:var(--text-faint);
+  letter-spacing:0.18em; text-transform:uppercase; margin-bottom:14px;
+}
+.hero h1{
+  font-family:var(--font-mono);
+  font-size:clamp(28px,4.4vw,46px);
+  line-height:1.15;
+  color:var(--white);
+  margin:0 0 18px 0;
+  font-weight:700;
+}
+.hero h1 .accent-os{color:var(--os);}
+.hero h1 .accent-cn{color:var(--cn);}
+.hero h1 .accent-oops{color:var(--oops);}
+.hero h1 .accent-dbms{color:var(--dbms);}
+.hero p{color:var(--text-dim); max-width:680px; font-size:15.5px;}
+.hero .badges{display:flex; gap:10px; flex-wrap:wrap; margin-top:20px;}
+.hero .badge{
+  font-family:var(--font-mono); font-size:11.5px; padding:6px 12px;
+  border-radius:20px; border:1px solid var(--line); color:var(--text-dim);
+  display:flex; align-items:center; gap:6px;
+}
+.hero .badge .sq{width:7px;height:7px;border-radius:2px;}
+
+/* ============ Subject divider ============ */
+.subject-divider{
+  margin:80px 0 30px;
+  padding-top:30px;
+  border-top:3px solid var(--line);
+  position:relative;
+}
+.subject-divider .num{
+  font-family:var(--font-mono); font-size:12px; color:var(--text-faint);
+  text-transform:uppercase; letter-spacing:0.15em; margin-bottom:8px;
+}
+.subject-divider h1{
+  font-family:var(--font-mono);
+  font-size:clamp(26px,4vw,40px);
+  margin:0 0 8px;
+  font-weight:700;
+}
+.subject-divider p.desc{color:var(--text-dim); max-width:700px; font-size:15px; margin:0;}
+.subject-divider.os{border-top-color:var(--os);} .subject-divider.os h1{color:var(--os);}
+.subject-divider.cn{border-top-color:var(--cn);} .subject-divider.cn h1{color:var(--cn);}
+.subject-divider.oops{border-top-color:var(--oops);} .subject-divider.oops h1{color:var(--oops);}
+.subject-divider.dbms{border-top-color:var(--dbms);} .subject-divider.dbms h1{color:var(--dbms);}
+
+/* ============ Chapter sections ============ */
+.chapter{margin-bottom:64px; scroll-margin-top:20px;}
+.chapter h2{
+  font-family:var(--font-mono);
+  font-size:clamp(20px,2.6vw,26px);
+  color:var(--white);
+  margin:0 0 6px;
+  padding-bottom:14px;
+  border-bottom:1px solid var(--line);
+  display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;
+}
+.chapter h2 .ts{
+  font-size:12px; color:var(--text-faint); font-weight:400;
+  font-family:var(--font-mono);
+}
+.chapter h3{
+  font-family:var(--font-mono);
+  font-size:17px; color:var(--white);
+  margin:34px 0 14px;
+  padding-left:12px;
+  border-left:3px solid var(--line);
+}
+.os-zone h3{border-left-color:var(--os);}
+.cn-zone h3{border-left-color:var(--cn);}
+.oops-zone h3{border-left-color:var(--oops);}
+.dbms-zone h3{border-left-color:var(--dbms);}
+
+.chapter h4{
+  font-size:14.5px; color:var(--text); font-weight:700;
+  margin:22px 0 10px; font-family:var(--font-mono);
+  text-transform:uppercase; letter-spacing:0.04em;
+}
+.chapter p{margin:0 0 14px; color:var(--text); font-size:15.5px;}
+.chapter ul, .chapter ol{margin:0 0 16px; padding-left:22px; color:var(--text); font-size:15.5px;}
+.chapter li{margin-bottom:7px;}
+.chapter strong{color:var(--white); font-weight:700;}
+.chapter code{
+  font-family:var(--font-mono); background:var(--bg-card-2);
+  padding:2px 6px; border-radius:4px; font-size:0.88em; color:var(--os);
+  border:1px solid var(--line-soft);
+}
+
+/* ============ Reusable component: Callout boxes ============ */
+.box{
+  border-radius:var(--radius);
+  padding:18px 20px;
+  margin:20px 0;
+  border:1px solid var(--line);
+  background:var(--bg-card);
+  position:relative;
+}
+.box .box-label{
+  font-family:var(--font-mono); font-size:11px; font-weight:700;
+  letter-spacing:0.1em; text-transform:uppercase;
+  display:flex; align-items:center; gap:7px; margin-bottom:10px;
+}
+.box p:last-child, .box ul:last-child, .box ol:last-child{margin-bottom:0;}
+
+/* Definition box -- "man page" style */
+.box.def{border-left:3px solid var(--cn); background:linear-gradient(180deg, rgba(90,209,230,0.06), transparent);}
+.box.def .box-label{color:var(--cn);}
+
+/* Analogy box -- sticky-note style */
+.box.analogy{
+  border-left:3px solid var(--oops);
+  background:linear-gradient(180deg, rgba(180,140,255,0.07), transparent);
+}
+.box.analogy .box-label{color:var(--oops);}
+.box.analogy p{font-style:italic; color:var(--text);}
+
+/* Interview-hot box */
+.box.hot{
+  border:1px solid var(--warn);
+  background:var(--warn-bg);
+}
+.box.hot .box-label{color:var(--warn);}
+
+/* Why-box: reasoning */
+.box.why{border-left:3px solid var(--dbms); background:linear-gradient(180deg, rgba(126,231,135,0.06), transparent);}
+.box.why .box-label{color:var(--dbms);}
+
+/* Note / tip box */
+.box.note{border-left:3px solid var(--os); background:linear-gradient(180deg, rgba(255,180,84,0.06), transparent);}
+.box.note .box-label{color:var(--os);}
+
+/* ============ Tables ============ */
+.table-wrap{overflow-x:auto; margin:20px 0; border-radius:var(--radius); border:1px solid var(--line);}
+table{width:100%; border-collapse:collapse; font-size:14px; min-width:480px;}
+thead th{
+  background:var(--bg-card-2); color:var(--white); text-align:left;
+  font-family:var(--font-mono); font-size:12px; letter-spacing:0.03em;
+  padding:11px 14px; border-bottom:1px solid var(--line); white-space:nowrap;
+}
+tbody td{padding:10px 14px; border-bottom:1px solid var(--line-soft); color:var(--text-dim); vertical-align:top;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:var(--bg-card);}
+tbody td:first-child{color:var(--text); font-weight:600;}
+
+/* ============ Code / command blocks ============ */
+pre.code-block{
+  background:#0d1117; border:1px solid var(--line); border-radius:var(--radius);
+  padding:16px 18px; overflow-x:auto; margin:18px 0;
+  font-family:var(--font-mono); font-size:13px; line-height:1.6; color:#c9d1d9;
+}
+pre.code-block .cm{color:var(--text-faint);}
+pre.code-block .kw{color:var(--oops);}
+pre.code-block .str{color:var(--dbms);}
+pre.code-block .fn{color:var(--cn);}
+
+/* ============ Diagram wrapper ============ */
+.diagram{
+  margin:24px 0; padding:22px; background:var(--bg-card);
+  border:1px solid var(--line); border-radius:var(--radius);
+  overflow-x:auto; text-align:center;
+}
+.diagram svg{max-width:100%; height:auto;}
+.diagram .caption{
+  font-family:var(--font-mono); font-size:11.5px; color:var(--text-faint);
+  margin-top:12px; text-align:center;
+}
+
+/* ============ Two-column grid ============ */
+.grid-2{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:20px 0;}
+@media (max-width:720px){.grid-2{grid-template-columns:1fr;}}
+.grid-2 .box{margin:0;}
+
+/* ============ Mini state badges ============ */
+.pill{
+  display:inline-block; font-family:var(--font-mono); font-size:11px;
+  padding:3px 9px; border-radius:20px; border:1px solid var(--line);
+  color:var(--text-dim); margin:2px 3px;
+}
+
+/* ============ Back to top ============ */
+#back-to-top{
+  position:fixed; bottom:24px; right:24px; z-index:600;
+  width:46px; height:46px; border-radius:50%;
+  background:var(--bg-card); border:1px solid var(--line);
+  color:var(--white); font-size:18px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .25s, transform .15s;
+  box-shadow:0 4px 18px rgba(0,0,0,0.4);
+}
+#back-to-top.show{opacity:1; pointer-events:auto;}
+#back-to-top:hover{transform:translateY(-3px); border-color:var(--os);}
+
+/* ============ Mobile drawer ============ */
+#overlay{
+  position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:550;
+  opacity:0; pointer-events:none; transition:opacity .2s;
+}
+#overlay.show{opacity:1; pointer-events:auto;}
+
+/* ============ Recap section ============ */
+.recap{
+  margin-top:90px; padding:40px 0 80px;
+  border-top:3px solid var(--white);
+}
+.recap .kicker{
+  font-family:var(--font-mono); font-size:12px; color:var(--text-faint);
+  letter-spacing:0.18em; text-transform:uppercase; margin-bottom:10px;
+}
+.recap h2{
+  font-family:var(--font-mono); font-size:clamp(24px,3.6vw,34px);
+  color:var(--white); margin:0 0 28px;
+}
+.recap-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:18px;}
+@media (max-width:760px){.recap-grid{grid-template-columns:1fr;}}
+.recap-card{
+  background:var(--bg-card); border:1px solid var(--line); border-radius:var(--radius);
+  padding:20px 22px;
+}
+.recap-card h4{
+  font-family:var(--font-mono); font-size:13px; text-transform:uppercase;
+  letter-spacing:0.05em; margin:0 0 14px; padding-bottom:10px; border-bottom:1px dashed var(--line);
+}
+.recap-card.os h4{color:var(--os);}
+.recap-card.cn h4{color:var(--cn);}
+.recap-card.oops h4{color:var(--oops);}
+.recap-card.dbms h4{color:var(--dbms);}
+.recap-card ul{margin:0; padding-left:18px; font-size:13.5px; color:var(--text-dim);}
+.recap-card li{margin-bottom:7px;}
+.recap-card li strong{color:var(--text);}
+
+footer{
+  text-align:center; padding:30px 20px 60px; color:var(--text-faint);
+  font-family:var(--font-mono); font-size:12px;
+}
+
+/* ============ Responsive: mobile ============ */
+@media (max-width:980px){
+  .shell{grid-template-columns:1fr;}
+  #topbar{display:flex;}
+  #sidebar{
+    position:fixed; top:0; left:0; height:100vh; width:280px; max-width:84vw;
+    background:var(--bg-raised); z-index:600;
+    transform:translateX(-100%); transition:transform .25s ease;
+    border-right:1px solid var(--line);
+  }
+  #sidebar.open{transform:translateX(0);}
+  main{padding:24px 18px 100px;}
+  .hero{padding-top:10px;}
+  .recap-grid{grid-template-columns:1fr;}
+}
+@media (max-width:480px){
+  .chapter h2{font-size:19px;}
+  table{font-size:12.5px;}
+}
+
+/* Print niceties */
+@media print{
+  #sidebar, #topbar, #back-to-top, #progress-bar{display:none;}
+  .shell{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<div id="topbar">
+  <div class="brand"><span class="dot"></span> CS_REVISION.SYS</div>
+  <button id="menu-btn" aria-label="Open menu">☰</button>
+</div>
+
+<div id="overlay"></div>
+
+<div class="shell">
+  <!-- ===================== SIDEBAR / TOC ===================== -->
+  <aside id="sidebar">
+    <div class="brand-block">
+      <div class="tag">root@revision:~$</div>
+      <div class="title">CS Fundamentals<span class="blink">_</span></div>
+      <div class="sub">One‑shot crash course → study guide<br>OS · CN · OOPS · DBMS</div>
+    </div>
+    <nav class="toc" id="toc">
+
+      <div class="subject-group">
+        <div class="subject-head c-os"><span class="ico">▣</span> Operating Systems</div>
+        <ul>
+          <li><a href="#os-basics">01 · Basics & Architecture</a></li>
+          <li><a href="#os-sync">02 · Synchronization & Locks</a></li>
+          <li><a href="#os-deadlock">03 · Deadlocks</a></li>
+          <li><a href="#os-memory">04 · Memory & Paging</a></li>
+          <li><a href="#os-files">05 · File Systems & I/O</a></li>
+          <li><a href="#os-interview">06 · Interview Questions</a></li>
+        </ul>
+      </div>
+
+      <div class="subject-group">
+        <div class="subject-head c-cn"><span class="ico">◈</span> Computer Networks</div>
+        <ul>
+          <li><a href="#cn-basics">01 · Basics & Topologies</a></li>
+          <li><a href="#cn-osi">02 · OSI Model</a></li>
+          <li><a href="#cn-tcp">03 · TCP vs UDP & Protocols</a></li>
+          <li><a href="#cn-dns">04 · DNS & Routing</a></li>
+          <li><a href="#cn-interview">05 · Interview Questions</a></li>
+        </ul>
+      </div>
+
+      <div class="subject-group">
+        <div class="subject-head c-oops"><span class="ico">◆</span> OOP Systems</div>
+        <ul>
+          <li><a href="#oops-basics">01 · Class & Object Basics</a></li>
+          <li><a href="#oops-pillars">02 · Four Pillars</a></li>
+          <li><a href="#oops-relations">03 · Relationships</a></li>
+          <li><a href="#oops-interview">04 · Interview Questions</a></li>
+        </ul>
+      </div>
+
+      <div class="subject-group">
+        <div class="subject-head c-dbms"><span class="ico">▦</span> DBMS</div>
+        <ul>
+          <li><a href="#dbms-basics">01 · Basics & Architecture</a></li>
+          <li><a href="#dbms-er">02 · ER Models</a></li>
+          <li><a href="#dbms-relational">03 · Relational Model & Keys</a></li>
+          <li><a href="#dbms-sql">04 · SQL Queries</a></li>
+          <li><a href="#dbms-norm">05 · Normalization & ACID</a></li>
+          <li><a href="#dbms-advanced">06 · NoSQL, Indexing & Design</a></li>
+          <li><a href="#dbms-interview">07 · Interview Questions</a></li>
+        </ul>
+      </div>
+
+      <div class="subject-group recap-link">
+        <ul><li><a href="#recap">⚡ Full Recap (1‑pager)</a></li></ul>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- ===================== MAIN CONTENT ===================== -->
+  <main id="main-content">
+
+    <div class="hero">
+      <div class="kicker">// revision build · compiled from a 6‑hour crash course transcript</div>
+      <h1>CS Fundamentals<br><span class="accent-os">OS</span> · <span class="accent-cn">CN</span> · <span class="accent-oops">OOPS</span> · <span class="accent-dbms">DBMS</span></h1>
+      <p>A single self-contained reference built for repeated revision before interviews and exams — not a summary. Every analogy, every "this is asked a lot" flag, and every diagram from the origin[...]
+      <div class="badges">
+        <span class="badge"><span class="sq" style="background:var(--os)"></span>Operating Systems</span>
+        <span class="badge"><span class="sq" style="background:var(--cn)"></span>Computer Networks</span>
+        <span class="badge"><span class="sq" style="background:var(--oops)"></span>OOP Systems</span>
+        <span class="badge"><span class="sq" style="background:var(--dbms)"></span>DBMS</span>
+      </div>
+    </div>
+
+    <div class="subject-divider os">
+  <div class="num">Module 01</div>
+  <h1>Operating Systems</h1>
+  <p class="desc">The layer that sits between your hardware and every app you run. We start from "what even is an OS" and build all the way up to disk scheduling and security — the classic OS interv[...]
+</div>
+
+<section class="chapter os-zone" id="os-basics">
+<h2>01 · Basics & Architecture <span class="ts">0:00 – 1:00:40</span></h2>
+
+<h3>What is an Operating System?</h3>
+<div class="box def">
+  <div class="box-label">📖 Definition</div>
+  <p>An Operating System is a <strong>system software</strong> that acts as an intermediary between the hardware and user applications/software. It manages hardware resources and provides a platform f[...]
+</div>
+
+<div class="box analogy">
+  <div class="box-label">💬 His Analogy</div>
+  <p>Think about how computers evolved — very basic machines first, where only things like editing were possible, and slowly more advanced versions came: Mac OS got more versions, Windows went 7 →[...]
+</div>
+
+<p>When your computer "hangs" and you have to reformat it, that literally means the OS stopped doing its job properly — formatting reinstalls a fresh, working OS, freeing up RAM in the process and m[...]
+
+<div class="box def">
+  <div class="box-label">📖 One-line core definition</div>
+  <p>OS = <strong>resource allocator</strong> and <strong>controller of programs</strong>. It controls programs and gives out resources based on what's needed.</p>
+</div>
+
+<div class="box why">
+  <div class="box-label">🤔 Why does the OS even need to exist?</div>
+  <p>If the user came directly to RAM, they wouldn't actually care about RAM — they just want to run a simple app. That allocation work is the OS's job. Whether you run something via Linux or any ot[...]
+</div>
+
+<p>The OS provides: <strong>security, multitasking, memory management, and file handling.</strong> If the user had to do all of this manually, something would always get missed — so the OS handles s[...]
+
+<div class="box def">
+  <div class="box-label">📖 Primary goal of an OS</div>
+  <p>Make the whole system <strong>convenient</strong> and <strong>efficient</strong>. (If users had to do everything themselves, they wouldn't even open the app — people are "lazy" about even insta[...]
+</div>
+
+<h3>Functions of the Operating System</h3>
+<div class="grid-2">
+  <div class="box note">
+    <div class="box-label">⚙ Process Management</div>
+    <p>Creates, schedules, and terminates processes. Example: you run WhatsApp → OS creates the process, schedules it if needed, and terminates it when you properly close the app.</p>
+  </div>
+  <div class="box note">
+    <div class="box-label">⚙ Memory Management</div>
+    <p>Decides how much RAM to give and when to reclaim it, based on available space and what the running app needs.</p>
+  </div>
+  <div class="box note">
+    <div class="box-label">⚙ File Management</div>
+    <p>System files, directories, and permissions. If you have multiple user profiles on one computer, the OS builds separate directories so one user can't access another's files. Whoever logs in uses[...]
+  </div>
+  <div class="box note">
+    <div class="box-label">⚙ I/O Management</div>
+    <p>Handles devices like mice and keyboards directly.</p>
+  </div>
+  <div class="box note">
+    <div class="box-label">⚙ Security & Protection</div>
+    <p>Authorization and access control (what we call authentication) — logging in with admin/root password on Windows or Linux.</p>
+  </div>
+  <div class="box note">
+    <div class="box-label">⚙ Network Management</div>
+    <p>Internet connectivity, sockets, protocols, and port allocation — when you build web apps, the ports that get allocated are managed by the OS.</p>
+  </div>
+</div>
+
+<h3>OS Architecture — The Five Layers</h3>
+<p>The OS architecture has roughly <strong>five layers</strong>. Bottom-most layer = hardware. Top-most = the user (where all your apps/programs sit). In between sit three layers whose job is to manag[...]
+
+<div class="diagram">
+<svg viewBox="0 0 600 360" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .lyr{font-family:'JetBrains Mono',monospace; font-size:13px; fill:#d8dee9;}
+    .lbl{font-family:'JetBrains Mono',monospace; font-size:11px; fill:#8b95a5;}
+  </style>
+  <rect x="60" y="10" width="480" height="50" rx="8" fill="#1a1f12" stroke="#ffb454" stroke-width="1.5"/>
+  <text x="300" y="40" text-anchor="middle" class="lyr" fill="#ffb454">USER / APPLICATIONS</text>
+
+  <rect x="60" y="80" width="480" height="50" rx="8" fill="#11171f" stroke="#1f2733" stroke-width="1.5"/>
+  <text x="300" y="110" text-anchor="middle" class="lyr">SYSTEM UTILITIES</text>
+
+  <rect x="60" y="150" width="480" height="50" rx="8" fill="#11171f" stroke="#1f2733" stroke-width="1.5"/>
+  <text x="300" y="180" text-anchor="middle" class="lyr">OPERATING SYSTEM APIs</text>
+
+  <rect x="60" y="220" width="480" height="50" rx="8" fill="#1a1620" stroke="#b48cff" stroke-width="1.5"/>
+  <text x="300" y="250" text-anchor="middle" class="lyr" fill="#b48cff">KERNEL (core, always resident in memory)</text>
+
+  <rect x="60" y="290" width="480" height="50" rx="8" fill="#101a18" stroke="#7ee787" stroke-width="1.5"/>
+  <text x="300" y="320" text-anchor="middle" class="lyr" fill="#7ee787">HARDWARE</text>
+
+  <line x1="300" y1="60" x2="300" y2="80" stroke="#5b6472" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="300" y1="130" x2="300" y2="150" stroke="#5b6472" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="300" y1="200" x2="300" y2="220" stroke="#5b6472" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="300" y1="270" x2="300" y2="290" stroke="#5b6472" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#5b6472"/></marker></defs>
+</svg>
+<div class="caption">Fig 1 — The 5-layer OS architecture. Kernel sits closest to hardware and is "always on."</div>
+</div>
+
+<p>System utilities directly interact with programs and the OS APIs, delivering whatever the user requires. The <strong>kernel</strong> sits just above hardware.</p>
+
+<div class="box def">
+  <div class="box-label">📖 What is the Kernel?</div>
+  <p>The kernel is closest to the hardware — it's the <strong>core</strong> of the OS. Think of it as the <strong>heart</strong> of the operating system.</p>
+</div>
+
+<div class="box why">
+  <div class="box-label">🤔 Why must the kernel always stay resident in memory?</div>
+  <p>It is <strong>always resident in memory</strong> — always "on." If it isn't on, the OS fails and you need to reboot, or you go and run an OS/Windows update. The kernel watches every process, di[...]
+</div>
+
+<p>The kernel handles: <strong>CPU handling, memory management, I/O management, and Inter-Process Communication (IPC)</strong> — IPC gets covered in more depth later in the video.</p>
+
+<h4>🔥 Types of Kernels (4 types — asked a lot in interviews)</h4>
+<div class="box hot">
+  <div class="box-label">🔥 Flagged as interview-important</div>
+  <p>"Very important — you might get asked this directly in an interview."</p>
+</div>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Kernel Type</th><th>What it does</th><th>Examples</th></tr></thead>
+<tbody>
+<tr><td>Monolithic Kernel</td><td>All OS services bundled inside one large kernel "box"</td><td>Linux, Unix</td></tr>
+<tr><td>Microkernel</td><td>Minimal kernel; most services run in <strong>user space</strong>; each user can have their own kernel-assigned resources</td><td>Mac (style)</td></tr>
+<tr><td>Hybrid Kernel</td><td>Mix of both — behaves monolithic when root user accesses everything, behaves like microkernel when normal users are restricted per-user</td><td>Windows, macOS — most [...]
+<tr><td>Exokernel</td><td>Extremely minimal; gives programs <strong>direct hardware access</strong>; used in research projects (e.g. NASA-style projects) where full custom hardware control is needed</[...]
+</tbody>
+</table>
+</div>
+
+<h3>System Calls</h3>
+<div class="box def">
+  <div class="box-label">📖 Definition</div>
+  <p>System calls are the <strong>interface between a user program and the OS</strong>. When an app needs a privileged operation, it makes a system call.</p>
+</div>
+<div class="box analogy">
+  <div class="box-label">💬 His Analogy</div>
+  <p>It's just like calling an API and getting a response back — same idea, except here you're calling the OS instead of a web server. Whatever work the user wants done — execute, read, write, ope[...]
+</div>
+
+<h4>The 5 Categories of System Calls</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Category</th><th>Example calls</th></tr></thead>
+<tbody>
+<tr><td>Process Control</td><td>fork, exit, wait, exec</td></tr>
+<tr><td>File Management</td><td>open, read, write, close</td></tr>
+<tr><td>Device Management</td><td>read, write, ioctl</td></tr>
+<tr><td>Information Maintenance</td><td>alarm, sleep, getpid</td></tr>
+<tr><td>Communication</td><td>pipe, socket, shmget</td></tr>
+</tbody>
+</table>
+</div>
+<p>Memorize a few example calls from each category so that when an interviewer asks for an example of a system call you can speak with confidence — "it'll feel like you actually understand what you'[...]
+
+<h3>Types of Operating Systems (7 types)</h3>
+<div class="box note">
+  <div class="box-label">📝 Note</div>
+  <p>"We've written it in seven parts. There are more types too, but this much is enough for your purposes."</p>
+</div>
+
+<h4>1. Batch OS</h4>
+<div class="box def">
+  <div class="box-label">📖 Definition</div>
+  <p>Jobs are collected, grouped into batches, and executed <strong>without user interaction</strong>. Example: IBM OS/360.</p>
+</div>
+<p>Jobs go into a queue → a batch monitor → CPU → output. You predefine tasks (Task 1, Task 2, Task 3), put them in a queue in a specific order, and a monitor tracks completion and output as eac[...]
+
+<h4>2. Multiprogramming vs Multitasking vs Multiprocessing</h4>
+<div class="box hot">
+  <div class="box-label">🔥 Direct interview question</div>
+  <p>"This is asked directly in interviews — explain the difference between these three."</p>
+</div>
+<div class="box def">
+  <div class="box-label">📖 Multiprogramming</div>
+  <p>Multiple programs loaded into memory simultaneously, <strong>but only one process actually runs</strong> at a time — the CPU picks up Process 1, completes it, switches to Process 2, completes i[...]
+</div>
+<div class="box def">
+  <div class="box-label">📖 Multitasking (Time-Shared OS)</div>
+  <p>An extension of multiprogramming, but the CPU switches <strong>rapidly</strong> between processes, giving the <strong>illusion of parallelism</strong>. Example: Windows.</p>
+</div>
+<div class="box analogy">
+  <div class="box-label">💬 His Analogy</div>
+  <p>It feels like everything is running together, but actually the CPU is swiping between tasks — it's switching so fast that it looks like multitasking, but it's really still multiprogramming unde[...]
+</div>
+<div class="box def">
+  <div class="box-label">📖 Multiprocessing</div>
+  <p>Multiple CPUs in one system → <strong>true parallelism</strong> — multiple processes genuinely run together on different CPUs at the same time.</p>
+</div>
+
+<h4>3. Real-Time OS (RTOS)</h4>
+<div class="box hot">
+  <div class="box-label">🔥 Often asked directly</div>
+  <p>RTOS has strict time/complexity constraints and <strong>deadlines must always be met</strong> (Hard RTOS). <strong>Soft RTOS</strong> is less critical about deadlines — a little lag is acceptab[...]
+</div>
+
+<h4>4 & 5. Distributed OS and Embedded OS</h4>
+<p><strong>Distributed OS:</strong> multiple networked computers grouped together appear as one system (e.g. Google's system, Hadoop clusters) — you can run 5-6 different computers/OSes as one combi[...]
+<p><strong>Embedded OS:</strong> built for specific hardware — e.g. a microwave has some processing happening inside it, a smart TV runs a different app and needs its own OS because it's hardware to[...]
+
+<h3>Process Management</h3>
+<div class="box def">
+  <div class="box-label">📖 What is a Process?</div>
+  <p>A process is <strong>"a program in execution."</strong> A program that is running is called a process. It is an <strong>active entity</strong> — active because it's currently executing — and [...]
+</div>
+
+<h4>🔥 Process vs Program</h4>
+<div class="box hot">
+  <div class="box-label">🔥 "Asked directly in college exams and interviews — process vs program"</div>
+</div>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Aspect</th><th>Program</th><th>Process</th></tr></thead>
+<tbody>
+<tr><td>State</td><td>Passive — it's just code, saved, not running</td><td>Active — it's in memory and currently doing something</td></tr>
+<tr><td>Nature</td><td>Static (it's saved code; could be a virus's code sitting unused)</td><td>Dynamic (when you run it, it becomes a process and the virus's code actually executes)</td></tr>
+<tr><td>Copies</td><td>One copy on disk</td><td>Multiple instances possible (open Chrome 5 times → 5 separate instances, each with its own memory space and state)</td></tr>
+<tr><td>Resources</td><td>No resources owned</td><td>RAM, CPU etc. are consumed while running</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Process Control Block (PCB)</h3>
+<div class="box def">
+  <div class="box-label">📖 Definition</div>
+  <p>Whenever a process runs, it needs memory, space, files — a proper own resource set — and all of this active-state data is stored in a structure called the <strong>Process Control Block</strong[...]
+</div>
+<div class="box hot">
+  <div class="box-label">🔥 Direct exam/interview question</div>
+  <p>"This was directly asked in my own college exam — 'what are process states?'"</p>
+</div>
+
+<p>PCB stores: <strong>Process ID, Process State, Program Counter, CPU Registers, Memory Management info, I/O status, Accounting info</strong>.</p>
+
+<h3>Process States (5 states)</h3>
+<div class="diagram">
+<svg viewBox="0 0 640 160" xmlns="http://www.w3.org/2000/svg">
+  <style>.s{font-family:'JetBrains Mono',monospace;font-size:13px;fill:#0a0e14;font-weight:700;}.al{font-family:'JetBrains Mono',monospace;font-size:10px;fill:#8b95a5;}</style>
+  <rect x="10" y="55" width="90" height="46" rx="23" fill="#5b6472"/><text x="55" y="83" text-anchor="middle" class="s">NEW</text>
+  <rect x="150" y="55" width="90" height="46" rx="23" fill="#ffb454"/><text x="195" y="83" text-anchor="middle" class="s">READY</text>
+  <rect x="290" y="55" width="100" height="46" rx="23" fill="#7ee787"/><text x="340" y="83" text-anchor="middle" class="s">RUNNING</text>
+  <rect x="290" y="125" width="100" height="36" rx="18" fill="#5ad1e6"/><text x="340" y="148" text-anchor="middle" class="s" style="font-size:11px">WAITING</text>
+  <rect x="440" y="55" width="110" height="46" rx="23" fill="#ff6b6b"/><text x="495" y="83" text-anchor="middle" class="s">TERMINATED</text>
+  <line x1="100" y1="78" x2="150" y2="78" stroke="#8b95a5" stroke-width="1.5" marker-end="url(#a2)"/>
+  <line x1="240" y1="78" x2="290" y2="78" stroke="#8b95a5" stroke-width="1.5" marker-end="url(#a2)"/>
+  <line x1="390" y1="78" x2="440" y2="78" stroke="#8b95a5" stroke-width="1.5" marker-end="url(#a2)"/>
+  <line x1="320" y1="101" x2="320" y2="125" stroke="#8b95a5" stroke-width="1.5" marker-end="url(#a2)"/>
+  <line x1="355" y1="125" x2="355" y2="101" stroke="#8b95a5" stroke-width="1.5" marker-end="url(#a2)"/>
+  <defs><marker id="a2" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#8b95a5"/></marker></defs>
+  <text x="55" y="115" text-anchor="middle" class="al">created</text>
+  <text x="195" y="115" text-anchor="middle" class="al">admitted</text>
+  <text x="340" y="115" text-anchor="middle" class="al">dispatched</text>
+</svg>
+<div class="caption">Fig 2 — Process state transitions: New → Ready → Running → (Waiting ↔ Running) → Terminated</div>
+</div>
+
+<ol>
+<li><strong>New</strong> — process is just created, just started.</li>
+<li><strong>Ready</strong> — waiting for CPU assignment.</li>
+<li><strong>Running</strong> — CPU has been assigned; process executes.</li>
+<li><strong>Waiting</strong> — process pauses mid-way (e.g. waiting on I/O).</li>
+<li><strong>Terminated</strong> — process has completed.</li>
+</ol>
+
+<h3>Context Switching</h3>
+<div class="box def">
+  <div class="box-label">📖 Definition</div>
+  <p>When the CPU switches from one process to another, this is called <strong>context switching</strong>. The current process's PCB is saved; the CPU then loads the next process's PCB and resumes fro[...]
+</div>
+<p>Sequence: Process 1 running → save P1's PCB → load P2's PCB → run P2 → (need to switch back) → save P2's PCB → load P1's PCB → resume P1. The extra time spent on all this saving/loadi[...]
+
+<h3>Threads</h3>
+<div class="box hot">
+  <div class="box-label">🔥 Direct interview topic</div>
+  <p>"Direct interview questions are built on threads."</p>
+</div>
+<div class="box def">
+  <div class="box-label">📖 Definition</div>
+  <p>A thread is the <strong>smallest unit of CPU execution</strong>. A process can have multiple threads — these are called <strong>lightweight processes</strong>. Threads of the same process <stro[...]
+</div>
+
+<h4>🔥 Process vs Thread</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Aspect</th><th>Process</th><th>Thread</th></tr></thead>
+<tbody>
+<tr><td>Weight</td><td>Heavy</td><td>Lightweight</td></tr>
+<tr><td>Memory</td><td>Separate memory space</td><td>Shared memory space</td></tr>
+<tr><td>Speed</td><td>Slower (big, heavy)</td><td>Faster (direct, small)</td></tr>
+<tr><td>Communication</td><td>Needs IPC (Inter-Process Communication) — slow / time-taking</td><td>Direct memory sharing (same code & data) — fast</td></tr>
+<tr><td>Crash isolation</td><td>One process crash doesn't affect another (different program entirely)</td><td>One thread crash <strong>can kill the whole process</strong></td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>Types of Threads</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Type</th><th>Managed by</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td>User-Level Threads (ULT)</td><td>User space</td><td>No kernel awareness, fast, but one blocking call blocks all threads</td></tr>
+<tr><td>Kernel-Level Threads (KLT)</td><td>Kernel</td><td>True parallelism on multicore, slower to create, each independently schedulable (Windows/Linux threads)</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>Multithreading Models</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Model</th><th>Mapping</th><th>Trade-off</th></tr></thead>
+<tbody>
+<tr><td>Many-to-One</td><td>Many user threads → 1 kernel thread</td><td>Blocking issues — if thread 1/2/3 uses the same kernel, blocking can occur</td></tr>
+<tr><td>One-to-One</td><td>1 user thread → 1 kernel thread</td><td>Works properly; used by Windows / Linux</td></tr>
+<tr><td>Many-to-Many</td><td>Mesh — any combination</td><td>Whatever's available gets used</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>Benefits of Multithreading</h4>
+<ul>
+<li><strong>Responsiveness</strong> — UI stays active while background work runs (e.g. a download continues in Chrome's background while you keep browsing).</li>
+<li><strong>Resource sharing</strong> — threads share the process's memory.</li>
+<li><strong>Economy</strong> — creating threads is cheaper than creating processes (you're running multiple threads inside one process/space).</li>
+<li><strong>Scalability</strong> — utilizes multiple cores.</li>
+</ul>
+
+<h3>CPU Scheduling</h3>
+<div class="box hot">
+  <div class="box-label">🔥 Very important for interviews</div>
+  <p>"Again I keep repeating it — everything we're discussing in this video is a very important topic, and you need to make proper notes."</p>
+</div>
+
+<div class="box why">
+  <div class="box-label">🤔 Why does scheduling exist?</div>
+  <p>Multiple programs and threads are running. You need to decide which task runs next, switching between them in milliseconds. Your goal should be: maximize CPU utilization, minimize waiting time. T[...]
+</div>
+
+<h4>Scheduling Queues</h4>
+<ul>
+<li><strong>Job Queue</strong> — all processes in the system.</li>
+<li><strong>Ready Queue</strong> — processes in RAM, ready to execute.</li>
+<li><strong>Device Queue</strong> — processes waiting on an I/O device (e.g. waiting for the printer or keyboard input).</li>
+</ul>
+
+<h4>Types of Schedulers</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Scheduler</th><th>Job</th><th>Frequency</th></tr></thead>
+<tbody>
+<tr><td>Long-Term (Job Scheduler)</td><td>Decides which program gets loaded into RAM; manages degree of multiprogramming</td><td>Infrequent — seconds/minutes</td></tr>
+<tr><td>Short-Term (CPU Scheduler)</td><td>Decides which ready process goes into the CPU next</td><td>Very frequent</td></tr>
+<tr><td>Medium-Term (Swapper)</td><td>Swaps processes in/out of memory (I/O — in and out of memory)</td><td>Periodic</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>Scheduling Criteria</h4>
+<ul>
+<li><strong>CPU Utilization</strong> — keep it maximum (aim ~40–90%).</li>
+<li><strong>Throughput</strong> — number of processes completed per unit time; should come out well.</li>
+<li><strong>Turnaround Time (TAT)</strong> — submission to completion time; should be minimum.</li>
+<li><strong>Waiting Time</strong> — time spent in the ready queue; lower = faster switching.</li>
+<li><strong>Response Time</strong> — time from submission to the first response; should be fast.</li>
+</ul>
+
+<h3>Scheduling Algorithms</h3>
+<p>Two broad categories: <strong>Non-preemptive</strong> and <strong>Preemptive</strong>.</p>
+
+<h4>Non-Preemptive Algorithms</h4>
+
+<h4>1. First Come First Serve (FCFS)</h4>
+<div class="box def">
+  <div class="box-label">📖 Definition</div>
+  <p>The process that arrives first gets the CPU first. Simple <strong>queue</strong> behavior.</p>
+</div>
+<div class="box why">
+  <div class="box-label">⚠ The Convoy Effect Problem</div>
+  <p>A short process can end up waiting behind a long one. If a 1-minute job and a 10-minute job both need the CPU and the 10-minute job arrived first in the queue, the 1-minute job has to wait the fu[...]
+</div>
+
+<h4>Gantt Chart</h4>
+<div class="box def">
+  <div class="box-label">📖 What is a Gantt Chart?</div>
+  <p>A time-vs-process graph: x-axis = time, blocks = which process is running during that time. Process 1 runs 0→5 (if it arrived first and took 5ms), Process 2 runs next, and so on, based on arriv[...]
+</div>
+
+<h4>2. Shortest Job First (SJF)</h4>
+<div class="box def">
+  <div class="box-label">📖 Definition</div>
+  <p>Non-preemptive. The process with the <strong>shortest burst time</strong> gets the CPU first.</p>
+</div>
+<div class="box why">
+  <div class="box-label">⚠ Starvation Problem</div>
+  <p>If short processes (e.g. 5-minute jobs) keep arriving repeatedly, a long process (e.g. a 10-minute job) might never get to run — every time the scheduler picks "shortest job," a newer short job[...]
+</div>
+<p>Example walked through: arrival/burst times for 3 processes → 2-second job runs first, then the 4-second one, then the 6-second one (shortest-burst-first), and average wait time is computed by su[...]
+
+<h4>Preemptive Algorithms</h4>
+
+<h4>3. Shortest Remaining Time First (SRTF)</h4>
+<div class="box def">
+  <div class="box-label">📖 Definition</div>
+  <p>The preemptive version of SJF. If a new process arrives with a burst time shorter than the <strong>remaining</strong> time of the currently running process, the CPU <strong>preempts</strong> (int[...]
+</div>
+<div class="box why">
+  <div class="box-label">⚠ Trade-off</div>
+  <p>Optimal in theory, but causes <strong>high context-switching overhead</strong>. Example: a 10-minute job runs for 2 minutes, then a new 2-minute job arrives — the scheduler breaks the running j[...]
+</div>
+
+<h4>4. Round Robin (RR)</h4>
+<div class="box def">
+  <div class="box-label">📖 Definition</div>
+  <p>Every process gets a fixed <strong>time quantum</strong> (e.g. 2 seconds), runs for that long, then moves to the next process — cycling through all processes. Used in time-sharing systems. When[...]
+</div>
+<div class="box why">
+  <div class="box-label">🤔 The Time Quantum Trade-off</div>
+  <p><strong>If the quantum is too small</strong> → too many context switches (overhead dominates). <strong>If the quantum is too large</strong> → it behaves like FCFS (if you give a 1-hour quantu[...]
+</div>
+<p>Worked example: with a 2-second quantum across 3 processes, Process 1 runs 2s, Process 2 runs 2s, Process 3 runs its full burst, then back to whoever has remaining time — average waiting time com[...]
+
+<h4>5. Priority Scheduling</h4>
+<div class="box def">
+  <div class="box-label">📖 Definition</div>
+  <p>Each process gets a priority number. Lower-priority processes run last; higher-priority run first. By convention, priority numbers increase as priority decreases — priority 1 = highest, priorit[...]
+</div>
+<div class="box why">
+  <div class="box-label">⚠ Starvation + Aging Fix</div>
+  <p>Low-priority processes can starve forever if high-priority ones keep arriving. The fix is <strong>Aging</strong>: gradually increase a waiting process's priority over time (e.g. +1 every time ano[...]
+</div>
+
+<h4>6. Multilevel Queue Scheduling</h4>
+<p>The ready queue is divided into multiple separate queues (system, interactive, batch), and <strong>each queue has its own scheduling algorithm</strong> — you can apply different algorithms to dif[...]
+
+<h4>7. Multilevel Feedback Queue</h4>
+<p>Like multilevel queue, but <strong>processes can move between queues</strong>. This is the most flexible and most complex to implement, and is used in most common modern OS like Linux CFS (Complete[...]
+
+<h4>Comparison Table</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Algorithm</th><th>Preemptive?</th><th>Main Problem</th><th>Complexity</th></tr></thead>
+<tbody>
+<tr><td>FCFS</td><td>No</td><td>Convoy effect</td><td>Low</td></tr>
+<tr><td>SJF</td><td>No</td><td>Starvation</td><td>Medium</td></tr>
+<tr><td>SRTF</td><td>Yes</td><td>High context-switch overhead</td><td>Medium</td></tr>
+<tr><td>Round Robin</td><td>Yes</td><td>Quantum tuning trade-off</td><td>Medium</td></tr>
+<tr><td>Priority</td><td>Either</td><td>Starvation (fixed by Aging)</td><td>Medium</td></tr>
+<tr><td>Multilevel Feedback Queue</td><td>Yes</td><td>—</td><td><strong>Highest</strong> (most flexible but most complex to run)</td></tr>
+</tbody>
+</table>
+</div>
+
+</section>
+
+<section class="chapter os-zone" id="os-sync">
+<h2>02 · Synchronization & Locks <span class="ts">1:00:41 – 1:11:59</span></h2>
+
+<h3>Process Synchronization</h3>
+<h4>The Critical Section Problem</h4>
+<div class="box def">
+  <div class="box-label">📖 Definition</div>
+  <p>When multiple processes access shared data <strong>concurrently</strong>, we get a <strong>race condition</strong>. The <strong>critical section</strong> is the code segment that accesses the shared[...]
+</div>
